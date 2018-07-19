@@ -44,8 +44,10 @@ import android.os.Looper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -650,10 +652,16 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
         }
         mPictureSizes.clear();
         collectPictureSizes(mPictureSizes, map);
+
+        final List<AspectRatio> removeList = new ArrayList<>();
         for (AspectRatio ratio : mPreviewSizes.ratios()) {
             if (!mPictureSizes.ratios().contains(ratio)) {
-                mPreviewSizes.remove(ratio);
+                removeList.add(ratio);
             }
+        }
+
+        for (AspectRatio ratio : removeList) {
+            mPreviewSizes.remove(ratio);
         }
 
         if (!mPreviewSizes.ratios().contains(mAspectRatio)) {
