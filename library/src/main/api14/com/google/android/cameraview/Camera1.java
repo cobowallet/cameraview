@@ -23,10 +23,12 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.support.v4.util.SparseArrayCompat;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -208,13 +210,19 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
 
     @Override
     Set<AspectRatio> getSupportedAspectRatios() {
-        SizeMap idealAspectRatios = mPreviewSizes;
-        for (AspectRatio aspectRatio : idealAspectRatios.ratios()) {
+        final List<AspectRatio> removeList = new ArrayList<>();
+
+        for (AspectRatio aspectRatio : mPreviewSizes.ratios()) {
             if (mPictureSizes.sizes(aspectRatio) == null) {
-                idealAspectRatios.remove(aspectRatio);
+                removeList.add(aspectRatio);
             }
         }
-        return idealAspectRatios.ratios();
+
+        for (AspectRatio aspectRatio : removeList) {
+            mPreviewSizes.remove(aspectRatio);
+        }
+
+        return mPreviewSizes.ratios();
     }
 
     @Override
