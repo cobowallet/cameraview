@@ -239,22 +239,11 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
 
     private Surface mPreviewSurface;
 
+    private CameraManager.AvailabilityCallback mCameraManagerCallback;
+
     Camera2(Callback callback, PreviewImpl preview, Context context) {
         super(callback, preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        mCameraManager.registerAvailabilityCallback(new CameraManager.AvailabilityCallback() {
-            @Override
-            public void onCameraAvailable(@NonNull String cameraId) {
-                super.onCameraAvailable(cameraId);
-                mAvailableCameras.add(cameraId);
-            }
-
-            @Override
-            public void onCameraUnavailable(@NonNull String cameraId) {
-                super.onCameraUnavailable(cameraId);
-                mAvailableCameras.remove(cameraId);
-            }
-        }, null);
         mImageFormat = mIsScanning ? ImageFormat.YUV_420_888 : ImageFormat.JPEG;
         mPreview.setCallback(new PreviewImpl.Callback() {
             @Override
@@ -271,6 +260,20 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
 
     @Override
     boolean start() {
+        mCameraManagerCallback = new CameraManager.AvailabilityCallback() {
+            @Override
+            public void onCameraAvailable(@NonNull String cameraId) {
+                super.onCameraAvailable(cameraId);
+                mAvailableCameras.add(cameraId);
+            }
+
+            @Override
+            public void onCameraUnavailable(@NonNull String cameraId) {
+                super.onCameraUnavailable(cameraId);
+                mAvailableCameras.remove(cameraId);
+            }
+        };
+        mCameraManager.registerAvailabilityCallback(mCameraManagerCallback, null);
         if (!chooseCameraIdByFacing()) {
             mAspectRatio = mInitialRatio;
             return false;
@@ -286,6 +289,10 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
 
     @Override
     void stop() {
+        if (mCameraManagerCallback != null && mCameraManager != null) {
+            mCameraManager.unregisterAvailabilityCallback(mCameraManagerCallback);
+        }
+
         if (mCaptureSession != null) {
             mCaptureSession.close();
             mCaptureSession = null;
